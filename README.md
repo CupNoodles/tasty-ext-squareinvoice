@@ -5,7 +5,7 @@ Creates an invoice in squareup.com from an existing TastyIgniter order. This ext
 ### Dependancies
 
 This extension will install the PHP square SDK https://github.com/square/square-php-sdk.
-Common usage will depend on either a variable delivery fee extension such as cupnoodles.postmates or an order editor such sa cupnoodles.ordermenuedit.
+Common usage will depend on either a variable delivery fee extension such as cupnoodles.postmates or an order editor such as cupnoodles.ordermenuedit.
 
 ### Installation
 

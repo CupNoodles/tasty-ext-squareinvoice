@@ -13,7 +13,7 @@ return [
     'payment_description_label' => 'Payment block description',
 
     'create_square_invoice_button' => 'Send Square Invoice',
-    'create_square_invoice_confirmation' => 'Are you sure this order is ready to become a square invoice? This can olye be done once through admin - any further edits will need to be made in the Square dashboard.',
+    'create_square_invoice_confirmation' => 'Are you sure this order is ready to become a square invoice? This can only be done once through admin - any further edits will need to be made in the Square dashboard.',
 
     'enable_pickup' => 'Enable for pickup orders?',
     'enable_delivery' => 'Enable for delivery orders?',
