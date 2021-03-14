@@ -1,0 +1,8 @@
+{
+  "name": "cupnoodles/squareinvoice",
+  "type": "igniter-extension",
+  "keywords": ["tastyigniter", "squareinvoice", "payment" ],
+  "require": {
+    "square/square": "~9.0"
+  }
+}

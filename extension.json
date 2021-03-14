@@ -1,0 +1,21 @@
+{
+    "code": "cupnoodles.squareinvoice",
+    "name": "Square Invoices",
+    "description": "Square Invoice generator from TastyIgniter Admin.",
+    "version": "v1.0.0",
+    "author": "CupNoodles",
+    "icon": {
+      "class": "fa fa-file-invoice",
+      "backgroundColor": "#1B294B",
+      "color": "#fff"
+    },
+    "homepage": "",
+    "require": {
+      "igniter.cart" : "*",
+      "igniter.coupons": "*",
+      "igniter.local": "*",
+      "igniter.user": "*",
+      "igniter.payregister": "*",
+      "square/square": ">9.0"
+    }
+  }
