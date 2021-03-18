@@ -14,6 +14,7 @@ use Admin\Models\Orders_model;
 use Admin\Models\Locations_model;
 use Admin\Widgets\Toolbar;
 use Admin\Controllers\Orders;
+use System\Classes\ExtensionManager;
 
 use CupNoodles\SquareInvoice\Models\SquareInvoiceSettings;
 
@@ -51,6 +52,8 @@ use Square\Models\InvoiceDeliveryMethod;
 use Square\Models\CreateInvoiceRequest;
 use Square\Models\InvoiceRequestType;
 use Square\Models\PublishInvoiceRequest;
+use Square\Models\MeasurementUnit;
+use Square\Models\MeasurementUnitCustom;
 
 class Extension extends BaseExtension
 {
@@ -114,17 +117,17 @@ class Extension extends BaseExtension
                 if(    SquareInvoiceSettings::get('enable_square_invoices_on_pickup') && $form->model->isCollectionType()
                     || SquareInvoiceSettings::get('enable_square_invoices_on_delivery') && $form->model->isDeliveryType()
                 ){
-
-                    Event::listen('admin.toolbar.extendButtons', function (Toolbar $toolbar) use ($form) {
-                        $toolbar->buttons['send_square_invoice']  = [
-                            'label' => 'lang:cupnoodles.squareinvoice::default.create_square_invoice_button',
-                            'class' => 'btn btn-primary',
-                            'data-request' => 'onSquareInvoice',
-                            'data-request-data' => "_method:'POST', order_id:" . $form->model->order_id . ", refresh:1",
-                            'data-request-confirm' => 'lang:cupnoodles.squareinvoice::default.create_square_invoice_confirmation',
-                        ];
-                    });	
-
+                    if($form->model->square_invoice_id == ''){
+                        Event::listen('admin.toolbar.extendButtons', function (Toolbar $toolbar) use ($form) {
+                            $toolbar->buttons['send_square_invoice']  = [
+                                'label' => 'lang:cupnoodles.squareinvoice::default.create_square_invoice_button',
+                                'class' => 'btn btn-primary',
+                                'data-request' => 'onSquareInvoice',
+                                'data-request-data' => "_method:'POST', order_id:" . $form->model->order_id . ", refresh:1",
+                                'data-request-confirm' => 'lang:cupnoodles.squareinvoice::default.create_square_invoice_confirmation',
+                            ];
+                        });	
+                    }
                 }				
             }
         });
@@ -217,6 +220,21 @@ class Extension extends BaseExtension
 
         $ordersApi = $this->client->getOrdersApi();
 
+        $manager = ExtensionManager::instance();
+        // if cupnoodles.pricebyweight is enabled, item counts may be fractional an therefore need special treatment within the square invoice
+        $price_by_weight_enabled = false;
+        $extension = $manager->findExtension('cupnoodles.pricebyweight');
+        if($extension && $extension->disabled == false){
+            $price_by_weight_enabled = true;
+        }
+
+        // if cupnoodles.ordermenuedit is enabled, we want to send the ->actual_amt field instead of the ->quantity field
+        $order_menu_edit_enabled = false;
+        $extension = $manager->findExtension('cupnoodles.ordermenuedit');
+        if($extension && $extension->disabled == false){
+            $order_menu_edit_enabled = true;
+        }
+
         $body = new CreateOrderRequest;
  
         if(!SquareInvoiceSettings::get('production_mode')){
@@ -238,24 +256,31 @@ class Extension extends BaseExtension
         $body_order_lineItems = [];
         $menus = $orders_model->getOrderMenusWithOptions();
         foreach ($menus as $ix=>$menu) {
-            $quantity = $menu->quantity;
+
+            if($order_menu_edit_enabled){
+                $quantity = ($menu->actual_amt == '' ? $menu->quantity : $menu->actual_amt);
+            }
+            else{
+                $quantity = $menu->quantity;
+            }
+            
             $body_order_lineItems[$ix] = new OrderLineItem($quantity);
-            $body_order_lineItems[$ix]->setUid($menu->menu_id);
             $body_order_lineItems[$ix]->setName($menu->name);
 
-            
-            // TODO: units only if you've got the pricebyweight extention enabled
-            //$body_order_lineItems[$ix]->setQuantityUnit(new OrderQuantityUnit);
-            //$body_order_lineItems[0]->getQuantityUnit()->setMeasurementUnit(new Models\MeasurementUnit);
-            //$body_order_lineItems_0_quantityUnit_measurementUnit_customUnit_name = '';
-            //$body_order_lineItems_0_quantityUnit_measurementUnit_customUnit_abbreviation = 'abbreviation1';
-            //$body_order_lineItems[0]->getQuantityUnit()->getMeasurementUnit()->setCustomUnit(new Models\MeasurementUnitCustom(
-            //    $body_order_lineItems_0_quantityUnit_measurementUnit_customUnit_name,
-            //    $body_order_lineItems_0_quantityUnit_measurementUnit_customUnit_abbreviatio
-            //));
+            if($price_by_weight_enabled && isset($menu->uom_tag) && $menu->uom_tag != ''){
+                $body_order_lineItems[$ix]->setQuantityUnit(new OrderQuantityUnit);
+                $body_order_lineItems[$ix]->getQuantityUnit()->setMeasurementUnit(new MeasurementUnit);
+                $body_order_lineItems_0_quantityUnit_measurementUnit_customUnit_name = $menu->uom_tag;
+                $body_order_lineItems_0_quantityUnit_measurementUnit_customUnit_abbreviation = $menu->uom_tag;
+                $body_order_lineItems[$ix]->getQuantityUnit()->getMeasurementUnit()->setCustomUnit(new MeasurementUnitCustom(
+                    $body_order_lineItems_0_quantityUnit_measurementUnit_customUnit_name,
+                    $body_order_lineItems_0_quantityUnit_measurementUnit_customUnit_abbreviation
+                ));
+                $body_order_lineItems[$ix]->getQuantityUnit()->setPrecision($menu->uom_decimals);
+            }
 
             $body_order_lineItems[$ix]->setBasePriceMoney(new Money);
-            $body_order_lineItems[$ix]->getBasePriceMoney()->setAmount((int)($menu->subtotal*100));
+            $body_order_lineItems[$ix]->getBasePriceMoney()->setAmount((int)($menu->price*100));
             
             // ->setCurrency() in the Square SDK expects on of it's own defined constants, which we're assuming matches the iso3 code entered into TI. 
             $body_order_lineItems[$ix]->getBasePriceMoney()->setCurrency(app('currency')->getDefault()->getCode());
