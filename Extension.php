@@ -298,7 +298,7 @@ class Extension extends BaseExtension
                 $createOrderResponse = $apiResponse->getResult();
                 $orders_model->square_order_id = $createOrderResponse->getOrder()->getId();
                 $orders_model->save();
-
+                $orders_model->updateOrderStatus(null, ['comment' => 'New order profile created in Square with ID ' . $orders_model->square_order_id . '.']);
                 $this->createSquareOrderInvoice($orders_model);
             } else {
                 $errors = $apiResponse->getErrors();
@@ -356,7 +356,7 @@ class Extension extends BaseExtension
 
             $orders_model->square_invoice_id = $createInvoiceResponse->getInvoice()->getId();
             $orders_model->save();
-            
+            $orders_model->updateOrderStatus(null, ['comment' => 'New invoice created in Square with ID <a target="_blank" href="https://'.(SquareInvoiceSettings::get('production_mode') ? 'squareup' : 'squareupsandbox').'.com/dashboard/invoices/' . $orders_model->square_invoice_id . '">' . $orders_model->square_invoice_id . '</a>.']);
             $this->publishSquareInvoice($orders_model);
 
         } else {
