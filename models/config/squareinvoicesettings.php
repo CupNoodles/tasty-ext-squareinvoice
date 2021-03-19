@@ -81,7 +81,7 @@ return [
                 'default' => FALSE,
             ],
             'invoice_due_date_days' => [
-                'label' => 'lang:cupnoodles.squareinvoice::default.invoice_ddue_date_days',
+                'label' => 'lang:cupnoodles.squareinvoice::default.invoice_due_date_days',
                 'type' => 'number',
                 'span' => 'left',
                 'default' => '1',
