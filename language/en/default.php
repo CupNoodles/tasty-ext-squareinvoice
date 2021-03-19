@@ -31,7 +31,8 @@ return [
     'square_location_id_label' => 'Square Location ID',
 
     'invoice_title' => 'Invoice Title',
-    'invoice_description' => 'Invoice Description'
+    'invoice_description' => 'Invoice Description',
+    'invoice_due_date_days' => 'Invoice Due Date Lead Days'
 
 ];
 ?>

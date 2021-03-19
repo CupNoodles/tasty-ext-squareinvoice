@@ -335,7 +335,7 @@ class Extension extends BaseExtension
 
         $body_invoice_paymentRequests[0] = new InvoicePaymentRequest;
         $body_invoice_paymentRequests[0]->setRequestType(InvoiceRequestType::BALANCE);
-        $body_invoice_paymentRequests[0]->setDueDate(date('Y-m-d'));
+        $body_invoice_paymentRequests[0]->setDueDate(date('Y-m-d', strtotime('+' . SquareInvoiceSettings::get('invoice_due_date_days'). ' days')));
         $body_invoice_paymentRequests[0]->setTippingEnabled(false);
         $body_invoice->setPaymentRequests($body_invoice_paymentRequests);
 
