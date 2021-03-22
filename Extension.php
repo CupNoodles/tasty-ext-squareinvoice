@@ -287,8 +287,25 @@ class Extension extends BaseExtension
             
         }
 
-        $body->getOrder()->setLineItems($body_order_lineItems);
+        
 
+        
+        // add delivery fee as a line item
+
+        $orderTotals = $orders_model->getOrderTotals();
+        
+        foreach ($orderTotals as $total) {
+            if($total->code == 'delivery' && $total->value > 0){
+                $delivery_fee = new OrderLineItem(1);
+                $delivery_fee->setName('Delivery Fee');
+                $delivery_fee->setBasePriceMoney(new Money);
+                $delivery_fee->getBasePriceMoney()->setAmount((int)($total->value*100));
+                $delivery_fee->getBasePriceMoney()->setCurrency(app('currency')->getDefault()->getCode());
+                $body_order_lineItems[]= $delivery_fee;
+            }
+        }
+        
+        $body->getOrder()->setLineItems($body_order_lineItems);
 
         try {
             
